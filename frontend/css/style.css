@@ -1,0 +1,44 @@
+/* frontend/css/style.css */
+/* 自定义样式覆盖和扩展 */
+
+body {
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.jumbotron {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* 表格样式 */
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* 徽章大小 */
+.badge-severity {
+    min-width: 70px;
+}
+
+/* 卡片阴影 */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* 图表容器 */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Toast 通知 */
+.toast-container {
+    z-index: 1050;
+}
