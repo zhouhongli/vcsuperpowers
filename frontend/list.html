@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日志列表 - 智能日志分析与诊断平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">🔍 日志诊断平台</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="index.html">首页</a></li>
+                    <li class="nav-item"><a class="nav-link" href="dashboard.html">仪表盘</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="list.html">日志列表</a></li>
+                    <li class="nav-item"><a class="nav-link" href="submit.html">提交日志</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mt-4">
+        <h2 class="mb-4">日志列表</h2>
+
+        <!-- 筛选区 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="filterExceptionType" class="form-label">异常类型</label>
+                        <select class="form-select" id="filterExceptionType">
+                            <option value="">全部</option>
+                            <option value="NullPointerException">NullPointerException</option>
+                            <option value="TimeoutError">TimeoutError</option>
+                            <option value="DatabaseError">DatabaseError</option>
+                            <option value="AuthenticationError">AuthenticationError</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterSeverity" class="form-label">严重程度</label>
+                        <select class="form-select" id="filterSeverity">
+                            <option value="">全部</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterService" class="form-label">服务名称</label>
+                        <input type="text" class="form-control" id="filterService" placeholder="输入服务名">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="searchBox" class="form-label">搜索</label>
+                        <input type="text" class="form-control" id="searchBox" placeholder="关键词搜索">
+                    </div>
+                    <div class="col-md-12">
+                        <button class="btn btn-primary" onclick="loadLogs()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                            筛选
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+                        <button class="btn btn-danger float-end" onclick="batchDelete()" id="batchDeleteBtn" disabled>
+                            批量删除 (<span id="selectedCount">0</span>)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表格区 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                                <th>ID</th>
+                                <th>异常类型</th>
+                                <th>严重程度</th>
+                                <th>服务名称</th>
+                                <th>发生时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <tr><td colspan="7" class="text-center">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分页 -->
+                <nav aria-label="分页">
+                    <ul class="pagination justify-content-end" id="pagination">
+                    </ul>
+                </nav>
+
+                <!-- 分页信息 -->
+                <div class="text-muted" id="paginationInfo"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 查看日志详情 Modal -->
+    <div class="modal fade" id="logDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">日志详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">ID</dt>
+                        <dd class="col-sm-9" id="detailId"></dd>
+
+                        <dt class="col-sm-3">异常类型</dt>
+                        <dd class="col-sm-9"><span class="badge bg-info" id="detailExceptionType"></span></dd>
+
+                        <dt class="col-sm-3">严重程度</dt>
+                        <dd class="col-sm-9"><span id="detailSeverity"></span></dd>
+
+                        <dt class="col-sm-3">服务名称</dt>
+                        <dd class="col-sm-9" id="detailService"></dd>
+
+                        <dt class="col-sm-3">发生时间</dt>
+                        <dd class="col-sm-9" id="detailOccurredAt"></dd>
+
+                        <dt class="col-sm-3">日志内容</dt>
+                        <dd class="col-sm-9"><pre class="bg-light p-3" id="detailContent"></pre></dd>
+
+                        <dt class="col-sm-3">堆栈跟踪</dt>
+                        <dd class="col-sm-9"><pre class="bg-light p-3" id="detailStackTrace"></pre></dd>
+                    </dl>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="diagnoseCurrentLog()">一键诊断</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/list.js"></script>
+</body>
+</html>
