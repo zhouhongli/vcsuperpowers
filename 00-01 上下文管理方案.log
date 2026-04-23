@@ -1,0 +1,162 @@
+================================================================================
+智能日志分析与诊断平台 - 上下文管理方案
+================================================================================
+日期：2026/04/23
+版本：v1.0
+
+================================================================================
+【目标】
+================================================================================
+在长期开发过程中，防止 Claude 会话上下文过大导致：
+- 响应变慢
+- 关键信息被挤出上下文窗口
+-  Token 成本增加
+
+================================================================================
+【策略 1：文件化所有中间产物】
+================================================================================
+目录结构：
+```
+docs/
+├── superpowers/
+│   ├── specs/     # 设计文档（每个子项目一个）
+│   └── plans/     # 实现计划（每个迭代一个）
+logs/              # 过程记录（需求分析、会议记录等）
+```
+
+文件命名规范：
+- 设计文档：YYYY-MM-DD-<topic>-design.md
+- 实现计划：YYYY-MM-DD-<topic>-plan.md
+- 过程记录：NN-<topic>.log（两位数字序号）
+
+读取原则：
+- 需要回顾时，直接 Read 对应文件
+- 不依赖对话历史复述内容
+
+================================================================================
+【策略 2：任务原子化】
+================================================================================
+每个 Task 的粒度控制：
+- 修改文件数：1-3 个
+- 开发时间：2-5 分钟
+- 可独立验证：有独立测试或手动验证步骤
+
+Task 示例：
+```
+Task 1: 创建 backend/requirements.txt
+Task 2: 创建 backend/main.py 基础 FastAPI 应用
+Task 3: 创建 backend/models/log_entry.py 数据模型
+```
+
+每个 Task 完成后：
+1. 运行相关测试验证
+2. Git Commit
+3. 下一个 Task 开始时，只引用 Commit Hash，不复述前序内容
+
+================================================================================
+【策略 3：Git 作为外部记忆】
+================================================================================
+Commit 规范：
+```bash
+# 格式：<type>: <description>
+git commit -m "feat: add log entry model and repository"
+git commit -m "test: add unit tests for log repository"
+git commit -m "fix: handle null occurred_at in diagnosis"
+```
+
+追溯历史：
+```bash
+git log --oneline           # 查看提交历史
+git show <commit-hash>      # 查看具体改动
+git diff HEAD~3             # 查看最近 3 次提交的差异
+```
+
+分支策略：
+- main: 稳定版本
+- feature/<name>: 功能开发（如 feature/log-crud）
+
+================================================================================
+【策略 4：会话边界管理】
+================================================================================
+场景 A：完成一个 Task 后
+- 行动：立即 Commit
+- 新消息："Task 3 完成，已提交 a1b2c3d。开始 Task 4..."
+- 避免："刚才我们完成了 XXX，现在要做 XXX..."
+
+场景 B：跨会话继续工作
+- 行动：读取计划文件 + 最近 3 个 Commit
+- 命令：
+  ```bash
+  cat docs/superpowers/plans/xxx-plan.md
+  git log -3 --stat
+  git status
+  ```
+
+场景 C：上下文接近限制
+- 行动：总结当前状态到 WORK_IN_PROGRESS.md
+- 内容：已完成列表 + 待办列表 + 当前阻塞点
+- 新会话：读取该文件即可继续
+
+================================================================================
+【策略 5：本项目的迭代划分】
+================================================================================
+迭代 1: 项目 Scaffold + Mock DB 层
+  - backend/models/, backend/repository/
+  - frontend/index.html (空白框架)
+  Commit: "feat: initial project structure"
+
+迭代 2: FastAPI 基础 API
+  - POST/GET /api/logs 基础端点
+  Commit: "feat: basic log API endpoints"
+
+迭代 3: 日志 CRUD 完整实现
+  - PUT/DELETE /api/logs/{id}
+  - 批量删除
+  Commit: "feat: complete CRUD operations"
+
+迭代 4: 诊断引擎（规则匹配）
+  - backend/diagnosis/rules.py
+  - POST /api/logs/{id}/diagnose
+  Commit: "feat: rule-based diagnosis engine"
+
+迭代 5: 前端表单 + 列表页
+  - frontend/submit.html, frontend/list.html
+  Commit: "feat: frontend submission and list pages"
+
+迭代 6: 仪表盘图表 + 诊断详情页
+  - Chart.js 集成
+  - frontend/dashboard.html, frontend/diagnosis.html
+  Commit: "feat: dashboard charts and diagnosis details"
+
+迭代 7: Docker 配置 + 集成测试
+  - Dockerfile, docker-compose.yml
+  - tests/integration/
+  Commit: "feat: docker support and integration tests"
+
+================================================================================
+【检查清单 - 每次会话前】
+================================================================================
+开始前：
+[ ] 读取最新计划文件
+[ ] 查看 git status 确认无遗留变更
+[ ] 确认当前 Task 编号
+
+结束后：
+[ ] Git Commit（如有变更）
+[ ] 更新任务进度记录
+[ ] 如有阻塞，记录到 WORK_IN_PROGRESS.md
+
+================================================================================
+【文件索引】
+================================================================================
+当前项目文件：
+- 01 需求分析过程.log     - 需求收集完整记录
+- 00-01 上下文管理方案.log - 本文档（上下文管理策略）
+
+后续将生成：
+- docs/superpowers/specs/2026-04-23-log-diagnosis-platform-design.md
+- docs/superpowers/plans/2026-04-23-log-diagnosis-platform-plan.md
+
+================================================================================
+END OF DOCUMENT
+================================================================================
