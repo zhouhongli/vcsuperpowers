@@ -8,6 +8,10 @@ from .log_schemas import (
     ExceptionTypeEnum,
     SeverityEnum,
 )
+from .diagnosis_schemas import (
+    DiagnosisResponse,
+    DiagnosisCreateRequest,
+)
 
 __all__ = [
     "LogCreate",
@@ -17,4 +21,6 @@ __all__ = [
     "BatchDeleteRequest",
     "ExceptionTypeEnum",
     "SeverityEnum",
+    "DiagnosisResponse",
+    "DiagnosisCreateRequest",
 ]
