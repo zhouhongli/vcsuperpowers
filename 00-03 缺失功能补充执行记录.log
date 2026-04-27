@@ -1,0 +1,86 @@
+================================================================================
+智能日志分析与诊断平台 - 缺失功能补充执行记录
+================================================================================
+日期：2026/04/23
+版本：v1.1（补充实现）
+
+================================================================================
+【执行概要】
+================================================================================
+
+按照 subagent-driven-development 技能流程，完成了规格文档中 4 项缺失功能的
+补充实现。所有任务均通过 spec compliance review 和 code quality review。
+
+================================================================================
+【执行的任务】
+================================================================================
+
+Task A1: 文件上传 — 后端路由支持
+  文件：backend/routes/logs.py, tests/unit/test_file_upload.py,
+       tests/integration/test_file_upload.py
+  实现：POST /api/logs 改为双模式（JSON + multipart/form-data）
+  验证：5 个集成测试 + 3 个单元测试通过
+  Review：✅ Spec compliant, ✅ Code quality approved（修复后）
+
+Task A2: 文件上传 — 前端 submit.js 适配
+  文件：frontend/js/submit.js, frontend/js/api.js
+  实现：FormData 文件上传 + 日志内容/文件二选一
+  Review：✅ 通过
+
+Task B1: 编辑日志页面
+  文件：frontend/edit.html, frontend/js/edit.js, frontend/js/list.js
+  实现：完整编辑表单 + GET 回填 + PUT 提交 + 列表页编辑按钮
+  Review：✅ 通过
+
+Task C1: 大模型降级诊断
+  文件：backend/services/diagnosis_llm.py, backend/services/diagnosis.py,
+       tests/unit/test_diagnosis_llm.py
+  实现：规则匹配 < 0.7 时降级 Claude API，三重降级策略
+  Review：✅ Spec compliant, ✅ Code quality approved（修复置信度类型安全后）
+
+Task D1: 前端错误页面
+  文件：frontend/404.html, frontend/500.html, frontend/js/api.js
+  实现：404 跳转错误页（符合 spec 7.3），500 Toast 提示（符合 spec 7.3）
+  Review：✅ 通过（500 从页面跳转改为 Toast，符合 spec 原文）
+
+================================================================================
+【代码质量修复记录】
+================================================================================
+
+Review Issue 1 (Important)：_check_file_extension 类型注解
+  修复：filename: str → filename: Optional[str]
+
+Review Issue 2 (Important)：UnicodeDecodeError 未处理
+  修复：raw.decode("utf-8") 包裹 try/except，返回 400
+
+Review Issue 3 (Important)：文件上限测试缺失
+  修复：新增 test_upload_file_too_large_rejected（413 验证）
+
+Review Issue 4 (Important)：LLM confidence 类型不安全
+  修复：isinstance(llm_confidence, (int, float)) 验证
+
+Review Issue 5 (Minor)：500 错误处理与 spec 不符
+  修复：页面跳转 → showToast（符合 spec 7.3 "500 → 提示"）
+
+Review Issue 6 (Minor)：未使用的 import 和死代码
+  修复：移除 JSONResponse, date, parse_qs, LogCreate, File, _parse_datetime
+
+================================================================================
+【测试结果】
+================================================================================
+
+Total: 50 个测试全部通过
+  - 单元测试：38 个
+  - 集成测试：12 个
+
+================================================================================
+【后续改进建议（非阻塞）】
+================================================================================
+
+1. XSS 防护：list.js 中 DOM 注入需要 HTML 转义
+2. 编辑页面无法替换文件内容（需删除重建）
+3. 大模型 prompt 注入防护（内容截断/结构化输入）
+
+================================================================================
+END OF RECORD
+================================================================================

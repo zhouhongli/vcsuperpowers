@@ -1,0 +1,15 @@
+2026-04-23 14:52:23,429 httpcore.connection DEBUG: connect_tcp.started host='127.0.0.1' port=8000 local_address=None timeout=10.0 socket_options=None
+2026-04-23 14:52:23,432 httpcore.connection DEBUG: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x0000021A168F68E0>
+2026-04-23 14:52:23,432 httpcore.http11 DEBUG: send_request_headers.started request=<Request [b'POST']>
+2026-04-23 14:52:23,433 httpcore.http11 DEBUG: send_request_headers.complete
+2026-04-23 14:52:23,433 httpcore.http11 DEBUG: send_request_body.started request=<Request [b'POST']>
+2026-04-23 14:52:23,433 httpcore.http11 DEBUG: send_request_body.complete
+2026-04-23 14:52:23,433 httpcore.http11 DEBUG: receive_response_headers.started request=<Request [b'POST']>
+2026-04-23 14:52:23,434 httpcore.http11 DEBUG: receive_response_headers.complete return_value=(b'HTTP/1.1', 500, b'Internal Server Error', [(b'date', b'Thu, 23 Apr 2026 06:52:22 GMT'), (b'server', b'uvicorn'), (b'content-length', b'21'), (b'content-type', b'text/plain; charset=utf-8')])
+2026-04-23 14:52:23,435 httpx INFO: HTTP Request: POST http://127.0.0.1:8000/api/logs "HTTP/1.1 500 Internal Server Error"
+2026-04-23 14:52:23,435 httpcore.http11 DEBUG: receive_response_body.started request=<Request [b'POST']>
+2026-04-23 14:52:23,435 httpcore.http11 DEBUG: receive_response_body.complete
+2026-04-23 14:52:23,436 httpcore.http11 DEBUG: response_closed.started
+2026-04-23 14:52:23,436 httpcore.http11 DEBUG: response_closed.complete
+2026-04-23 14:52:23,436 httpcore.connection DEBUG: close.started
+2026-04-23 14:52:23,436 httpcore.connection DEBUG: close.complete

@@ -26,7 +26,3 @@ Thumbs.db
 
 # Claude Code
 .claude/
-
-# Log files
-*.log
-server_debug.log

@@ -1,0 +1,40 @@
+================================================================================
+Skill 编写位置错误问题记录
+================================================================================
+日期：2026/04/23
+记录人：Claude
+
+================================================================================
+【问题】fullstack-bug-tracing.md 初始放错了目录
+================================================================================
+
+错误路径：
+  d:\claudecode\vibecoding02\docs\superpowers\skills\fullstack-bug-tracing.md
+
+正确路径：
+  d:\claudecode\vibecoding02\.claude\skills\fullstack-bug-tracing.md
+
+错误原因：
+  docs/superpowers/ 是文档目录（spec 和 plan 的存放位置），不是 skill
+  加载路径。Claude Code 只扫描 .claude/skills/（项目级）和 ~/.claude/skills/
+  （用户级）来发现自定义 skill。将 skill 放在 docs/ 下不会被加载，
+  无法通过 Skill 工具调用。
+
+根本原因：
+  混淆了"skill 设计文档"和"skill 功能文件"两个概念。
+  - docs/superpowers/specs/  → 设计文档（给人类和规划流程看的）
+  - docs/superpowers/plans/  → 实现计划（给子 agent 看的）
+  - .claude/skills/          → 功能 skill 文件（给 Claude 加载器扫描的）
+
+修复：
+  1. 从 docs/superpowers/skills/ 删除 skill 文件
+  2. 放到 .claude/skills/ 目录下（与已有的 course-plan-designer.md 同级）
+
+教训：
+  写 skill 时先确认目标目录结构：
+  - docs/ 是文档，.claude/ 是功能
+  不要看到 superpowers 就以为什么都可以往里面塞
+
+================================================================================
+END OF RECORD
+================================================================================

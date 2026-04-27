@@ -1,0 +1,11 @@
+java.lang.NullPointerException: Cannot invoke method "com.example.service.UserServiceImpl.findById()" because "this.userService" is null
+	at com.example.controller.UserController.handleRequest(UserController.java:42)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:687)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:707)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:893)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:790)
+	at weblogic.servlet.internal.StubSecurityHelper$ServletServiceAction.run(StubSecurityHelper.java:286)
+	at weblogic.servlet.internal.StubSecurityHelper.invokeServlet(StubSecurityHelper.java:137)
+	at weblogic.servlet.internal.ServletStubImpl.execute(ServletStubImpl.java:350)
+	at weblogic.servlet.internal.TailFilter.doFilter(TailFilter.java:25)
+	at weblogic.servlet.internal.FilterChainImpl.doFilter(FilterChainImpl.java:78)
