@@ -37,6 +37,9 @@ async function loadLogAndDiagnosis() {
 
         // 尝试诊断
         await loadDiagnosis();
+
+        // 显示诊断结果
+        showDiagnosis();
     } catch (err) {
         showError('加载日志失败：' + err.message);
     }
@@ -99,10 +102,10 @@ function renderDiagnosis(diagnosis) {
     // 根因分析
     document.getElementById('rootCause').textContent = diagnosis.root_cause;
 
-    // 解决方案（按行分割）
+    // 解决方案（按行分割，后端已带序号）
     const solutions = diagnosis.solution.split('\n');
     document.getElementById('solution').innerHTML = solutions.map(s =>
-        `<li>${s}</li>`
+        `<p class="mb-2">${s}</p>`
     ).join('');
 
     // 相似日志
@@ -182,13 +185,3 @@ function getSeverityBadge(severity) {
 function goBack() {
     window.location.href = 'list.html';
 }
-
-// 覆盖 body 的 onDOMContentLoaded - 使用 IIFE 确保在 DOM 加载后显示诊断结果
-document.addEventListener('DOMContentLoaded', function() {
-    // 当有日志和诊断数据时显示诊断结果
-    setTimeout(() => {
-        if (currentLog) {
-            showDiagnosis();
-        }
-    }, 0);
-});

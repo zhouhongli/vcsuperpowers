@@ -1,12 +1,13 @@
 // frontend/js/api.js
 /** API 调用封装 */
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://localhost:8001/api';
 
 /**
  * 通用 fetch 封装
+ * @param skip404Redirect - 如果为 true，404 时不跳转页面，而是抛出错误
  */
-async function apiRequest(endpoint, options = {}) {
+async function apiRequest(endpoint, options = {}, skip404Redirect = false) {
     const url = `${API_BASE_URL}${endpoint}`;
     const config = {
         headers: {
@@ -17,6 +18,18 @@ async function apiRequest(endpoint, options = {}) {
 
     try {
         const response = await fetch(url, config);
+
+        if (response.status === 404) {
+            if (!skip404Redirect) {
+                window.location.href = '404.html';
+            }
+            return null;
+        }
+        if (response.status >= 500) {
+            showToast('服务器错误，请稍后重试', 'danger');
+            return null;
+        }
+
         if (!response.ok) {
             const error = await response.json().catch(() => ({ detail: response.statusText }));
             throw new Error(error.detail || `HTTP ${response.status}`);
@@ -40,6 +53,15 @@ const logsApi = {
         return apiRequest('/logs', {
             method: 'POST',
             body: JSON.stringify(data),
+        });
+    },
+
+    // 通过文件上传创建日志
+    async createFromFile(formData) {
+        return apiRequest('/logs', {
+            method: 'POST',
+            body: formData,
+            headers: {},
         });
     },
 
@@ -85,9 +107,9 @@ const logsApi = {
         });
     },
 
-    // 获取诊断结果
+    // 获取诊断结果（允许 404，首次加载时可能还没有诊断）
     async getDiagnosis(id) {
-        return apiRequest(`/logs/${id}/diagnosis`);
+        return apiRequest(`/logs/${id}/diagnosis`, {}, true);
     },
 };
 

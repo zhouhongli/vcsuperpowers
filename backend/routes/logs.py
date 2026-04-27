@@ -1,11 +1,10 @@
 # backend/routes/logs.py
 """日志管理路由"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, UploadFile
 from typing import Optional
 from datetime import datetime
 
 from backend.schemas.log_schemas import (
-    LogCreate,
     LogResponse,
     LogListResponse,
     BatchDeleteRequest,
@@ -14,17 +13,91 @@ from backend.main import repository
 
 router = APIRouter()
 
+ALLOWED_FILE_TYPES = {".log", ".txt"}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+
+def _check_file_extension(filename: Optional[str]) -> bool:
+    """检查文件扩展名是否合法"""
+    if not filename:
+        return False
+    ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    return ext in ALLOWED_FILE_TYPES
+
 
 @router.post("/logs", response_model=LogResponse, status_code=201)
-def create_log(log_data: LogCreate):
-    """创建日志条目"""
-    data = log_data.model_dump()
-    data["exception_type"] = data["exception_type"].value
-    data["severity"] = data["severity"].value
-    if data.get("occurred_at"):
-        data["occurred_at"] = data["occurred_at"].isoformat()
+async def create_log(request: Request):
+    """创建日志条目（支持 JSON 和 multipart/form-data 两种格式）"""
+    content_type = request.headers.get("content-type", "")
 
-    created = repository.create(data)
+    log_data = None
+
+    if "multipart" in content_type:
+        # --- Multipart/form-data 模式（文件上传）---
+        form = await request.form()
+        file: Optional[UploadFile] = form.get("file")
+        text_content = form.get("content")
+        exception_type = form.get("exception_type")
+        severity = form.get("severity")
+        service_name = form.get("service_name") or None
+        stack_trace = form.get("stack_trace") or None
+        user_id = form.get("user_id") or None
+        occurred_at_raw = form.get("occurred_at")
+
+        # 处理文件上传
+        file_content = None
+        if file and file.filename:
+            if not _check_file_extension(file.filename):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"不支持的文件类型。仅支持 {', '.join(ALLOWED_FILE_TYPES)}"
+                )
+            raw = await file.read()
+            if len(raw) > MAX_FILE_SIZE:
+                raise HTTPException(status_code=413, detail="文件大小超过 5MB 限制")
+            try:
+                file_content = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                raise HTTPException(status_code=400, detail="文件编码无效，请使用 UTF-8 编码")
+
+        # 文件内容优先于文本内容
+        final_content = file_content or text_content
+        if not final_content:
+            raise HTTPException(status_code=400, detail="必须提供日志内容或上传文件")
+
+        log_data = {
+            "content": final_content,
+            "exception_type": exception_type,
+            "severity": severity,
+            "service_name": service_name,
+            "stack_trace": stack_trace,
+            "user_id": user_id,
+        }
+        if occurred_at_raw:
+            log_data["occurred_at"] = occurred_at_raw
+
+    else:
+        # --- JSON 模式（向后兼容）---
+        try:
+            body = await request.json()
+        except Exception:
+            raise HTTPException(status_code=400, detail="请求体格式错误")
+
+        log_data = {
+            "content": body.get("content"),
+            "exception_type": body.get("exception_type"),
+            "severity": body.get("severity"),
+            "service_name": body.get("service_name"),
+            "stack_trace": body.get("stack_trace"),
+            "user_id": body.get("user_id"),
+        }
+        if body.get("occurred_at"):
+            log_data["occurred_at"] = body["occurred_at"]
+
+    if not log_data.get("content"):
+        raise HTTPException(status_code=400, detail="必须提供日志内容")
+
+    created = repository.create(log_data)
     return LogResponse(**created)
 
 

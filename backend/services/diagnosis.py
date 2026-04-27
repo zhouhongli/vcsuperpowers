@@ -4,6 +4,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 from .diagnosis_rules import match_rule
+from .diagnosis_llm import call_llm
 
 
 class DiagnosisService:
@@ -17,13 +18,11 @@ class DiagnosisService:
         """
         诊断指定日志
 
-        Args:
-            log_id: 日志 ID
-
-        Returns:
-            诊断结果
+        流程：
+        1. 规则匹配（高置信度直接返回）
+        2. 规则匹配失败时降级到大模型
+        3. 大模型也失败时返回通用诊断
         """
-        # 获取日志
         log = self.repository.get(log_id)
         if not log:
             raise ValueError(f"Log '{log_id}' not found")
@@ -39,19 +38,47 @@ class DiagnosisService:
             log.get("stack_trace")
         )
 
-        # 构建根因分析
-        matched_info = f"匹配到关键词：{', '.join(matched_keywords)}" if matched_keywords else "未匹配到特定关键词"
-        root_cause = rule["root_cause_template"].format(matched_info=matched_info)
+        # 规则高置信度或分数 >= 0.7 直接返回
+        use_llm = score < 0.7 or log["exception_type"] == "Other"
+        root_cause = None
+        solution = None
+
+        if use_llm:
+            # 尝试大模型
+            llm_result = call_llm(
+                log["exception_type"],
+                log["content"],
+                log["severity"],
+                log.get("service_name"),
+                log.get("stack_trace"),
+            )
+            if llm_result:
+                root_cause = llm_result.get("root_cause", rule.get("root_cause_template", ""))
+                llm_solution = llm_result.get("solution")
+                if llm_solution:
+                    solution = llm_solution
+                llm_confidence = llm_result.get("confidence")
+                if isinstance(llm_confidence, (int, float)):
+                    score = float(llm_confidence)
+
+        # 大模型也失败，使用规则匹配结果
+        if not root_cause:
+            matched_info = (
+                f"匹配到关键词：{', '.join(matched_keywords)}"
+                if matched_keywords else "未匹配到特定关键词"
+            )
+            root_cause = rule["root_cause_template"].format(matched_info=matched_info)
+            solution = "\n".join(f"{i+1}. {s}" for i, s in enumerate(rule["solutions"]))
 
         # 查找相似日志
         similar_logs = self._find_similar_logs(log, exclude_id=log_id, limit=3)
 
-        # 创建诊断结果
+        # 构建诊断结果
         diagnosis_data = {
             "id": f"diag-{log_id}",
             "log_id": log_id,
             "root_cause": root_cause,
-            "solution": "\n".join(f"{i+1}. {s}" for i, s in enumerate(rule["solutions"])),
+            "solution": solution,
             "severity_assessment": self._assess_severity(log["severity"], score),
             "similar_logs": similar_logs,
             "created_at": datetime.now().isoformat(),

@@ -57,6 +57,7 @@ function renderTable(logs) {
                 <td>${formatDate(log.occurred_at)}</td>
                 <td>
                     <button class="btn btn-sm btn-outline-primary" onclick="viewLog('${log.id}')">查看</button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="editLog('${log.id}')">编辑</button>
                     <button class="btn btn-sm btn-outline-danger" onclick="deleteLog('${log.id}')">删除</button>
                     <button class="btn btn-sm btn-outline-success" onclick="diagnoseLog('${log.id}')">诊断</button>
                 </td>
@@ -133,6 +134,13 @@ async function viewLog(id) {
     } catch (err) {
         showToast('加载失败：' + err.message, 'danger');
     }
+}
+
+/**
+ * 编辑日志
+ */
+function editLog(id) {
+    window.location.href = `edit.html?id=${id}`;
 }
 
 /**
